@@ -1,0 +1,249 @@
+{%- comment %}BSS Login{% endcomment -%}{% include 'bss-lock' %}{%- comment %}BSS-Login{% endcomment -%}
+<!DOCTYPE html>
+<html lang="en" class="no-js" lang="{{ request.locale.iso_code }}">
+<head>{{ 'bss-lock-settings.css' | asset_url | stylesheet_tag }}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Establish early connection to external domains -->
+  <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.shopify.com" crossorigin>
+  <link rel="preconnect" href="https://monorail-edge.shopifysvc.com">
+  <link rel="preconnect" href="//ajax.googleapis.com" crossorigin />
+
+  {%- assign main_font = settings.main_font -%}
+  {%- assign heading_font = settings.heading_font -%}
+  {%- assign nav_font = settings.nav_font -%}
+  {%- assign main_font_bold = main_font | font_modify: 'weight', 'bolder' -%}
+  {%- assign main_font_italic = main_font | font_modify: 'style', 'italic' -%}
+  {%- assign main_font_bold_italic = main_font_bold | font_modify: 'style', 'italic' -%}
+
+    <!-- Preload onDomain stylesheets and script libraries -->
+  <link rel="preload" href="{{ 'stylesheet.css' | asset_url }}" as="style">
+  <link rel="preload" as="font" href="{{ main_font | font_url }}" type="font/woff2" crossorigin>
+  <link rel="preload" as="font" href="{{ nav_font | font_url }}" type="font/woff2" crossorigin>
+  <link rel="preload" as="font" href="{{ heading_font | font_url }}" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ 'eventemitter3.min.js' | asset_url }}" as="script">
+  <link rel="preload" href="{{ 'theme.js' | asset_url }}" as="script">
+
+  {% if settings.favicon %}<link rel="shortcut icon" href="{{ settings.favicon | image_url: width: 32, height: 32 }}" type="image/png" />{% endif %}
+  <link rel="canonical" href="{{ canonical_url }}" />
+
+  <title>{% if template == 'index' %}{% if page_title contains 'Welcome' %}{{ shop.name }} &ndash; Welcome{% else %}{{ page_title }}{% endif %}{% elsif template == '404' %}Page Not Found{% elsif page_title contains shop.name %}{{ page_title }}{% else %}{{ page_title }} &ndash; {{ shop.name }}{% endif %}</title>
+  {% if page_description %}<meta name="description" content="{{ page_description }}" />{% endif %}
+
+  {% render 'social-meta-tags' %}
+  {% render 'structured-data' %}
+  {% render 'css-variables' %}
+
+  <link rel="stylesheet" href="{{ 'stylesheet.css' | asset_url }}" type="text/css">
+
+  <style>
+  {{ main_font | font_face: font_display: 'swap' }}
+  {{ nav_font | font_face: font_display: 'swap' }}
+  {{ heading_font | font_face: font_display: 'swap' }}
+  {{ main_font_bold | font_face: font_display: 'swap' }}
+  {{ main_font_italic | font_face: font_display: 'swap' }}
+  {{ main_font_bold_italic | font_face: font_display: 'swap' }}
+  </style>
+
+  {{ content_for_header }}
+
+</head>
+
+<body class="gridlock {% if settings.ultra_wide %}ultra_wide {% endif %}template-{{ template | handleize }} {% if template contains 'product' %}product{% elsif template contains 'collection' %}collection{% else %}{{ template | handleize }}{% endif %} {% render 'body-classes' %} js-slideout-toggle-wrapper js-modal-toggle-wrapper">
+  <a class="skip-link button visually-hidden" href="#main-content">{{ 'accessibility.skip_to_text' | t }}</a>
+  <div class="js-slideout-overlay site-overlay"></div>
+  <div class="js-modal-overlay site-overlay"></div>
+
+  <aside class="slideout slideout__drawer-left" data-wau-slideout="mobile-navigation" id="slideout-mobile-navigation">
+   {% section 'mobile-navigation' %}
+  </aside>
+
+  <main id="main-content" class="site-wrap" role="main" tabindex="-1">
+
+    <div class="js-header-group">
+      {% sections 'header-group' %}
+    </div><!-- /.js-header-group -->
+
+    <div class="main__content-wrapper">
+      {{ content_for_layout }}
+    </div>
+
+    {% sections 'footer-group' %}
+  </main>
+
+  {%- if settings.cart_type == 'drawer' -%}
+  <aside class="slideout slideout__drawer-right mini-cart" data-wau-slideout="ajax-cart" id="slideout-ajax-cart">
+    {% render 'cart-mini' %}
+  </aside>
+  {% elsif settings.cart_type == 'modal_cart' %}
+  <div class="modal__container" data-wau-modal="ajax-cart" id="modal-ajax-cart">
+    <div class="modal__inner-wrapper">
+      {% render 'cart-mini' %}
+    </div>
+  </div>
+  {%- endif -%}
+  {%- if settings.quickview -%}
+  <div class="modal__container" data-wau-modal="quickview" id="modal-quickview-cart">
+    <div class="modal__inner-wrapper">
+      {%- render 'product-quickview' -%}
+    </div>
+  </div>
+  {%- endif -%}
+
+  {% render 'cart-config' %}
+  <script src="{{ 'eventemitter3.min.js' | asset_url }}"></script>
+  <script src="{{ 'theme.js' | asset_url }}"></script>
+
+  {% section 'popup' %}
+
+  {%- if request.page_type contains 'customers/' or template == 'cart' -%}
+    <script src="{{ 'shopify_common.js' | shopify_asset_url }}" defer></script>
+  {%- endif -%}
+  {%- if request.page_type contains 'customers/' -%}
+  <script src="{{ 'customer_area.js' | shopify_asset_url }}" defer></script>
+  {%- endif -%}
+
+    <!-- JS Variable Helpers -->
+  <script type="text/javascript">
+    document.documentElement.className = document.documentElement.className.replace("no-js","js");
+
+    var template = {{ template | json }};
+
+    {%- if settings.scroll_animation != 'none' -%}
+      var aosActive = true;
+    {%- else -%}
+      var aosActive = false;
+    {%- endif -%}
+  </script>
+
+  <!-- Root element of PhotoSwipe. Must have class pswp. -->
+  <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background of PhotoSwipe.
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+      <!-- Container that holds slides.
+          PhotoSwipe keeps only 3 of them in the DOM to save memory.
+          Don't modify these 3 pswp__item elements, data is added later on. -->
+      <div class="pswp__container">
+          <div class="pswp__item"></div>
+          <div class="pswp__item"></div>
+          <div class="pswp__item"></div>
+      </div>
+      <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+      <div class="pswp__ui pswp__ui--hidden">
+          <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            {% render 'snip-icons',
+             wrapper: '.pswp__button',
+             type: 'apollo',
+             icon: 'left-carrot',
+             classes: 'pswp__button--icon',
+             size: '14px',
+             fill: 'var(--direction-color)',
+             hover: 'var(--direction-color)' %}
+          </button>
+          <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            {% render 'snip-icons',
+             wrapper: '.pswp__button',
+             type: 'apollo',
+             icon: 'right-carrot',
+             classes: 'pswp__button--icon',
+             size: '14px',
+             fill: 'var(--direction-color)',
+             hover: 'var(--direction-color)' %}
+          </button>
+          <button class="pswp__button pswp__button--close" title="Close (Esc)">
+            {% render 'snip-icons',
+             wrapper: '.pswp__button',
+             type: 'apollo',
+             icon: 'close',
+             classes: 'pswp__button--icon',
+             size: '15px',
+             fill: 'var(--direction-color)',
+             hover: 'var(--direction-color)' %}
+          </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if ( aosActive ) AOS.init();
+  </script>
+
+{% section 'embroidery-popup' %}
+{{ 'embroidery-popup.js' | asset_url | script_tag }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const popup     = document.getElementById('customPopup');
+  const openBtn   = document.getElementById('openCustomization');
+  const closeBtn  = document.getElementById('closePopup');
+  const addBtn    = document.getElementById('applyCustomization');
+  const summary   = document.getElementById('customSummary');
+  const editBtn   = document.getElementById('editCustomization');
+  const removeBtn = document.getElementById('removeCustomization');
+
+  const byId = (id) => document.getElementById(id);
+
+  // Read from either radios (name="...") or a <select id="...">
+  function getChoice(nameOrId) {
+    const el = byId(nameOrId);
+    if (el && typeof el.value !== 'undefined') return el.value;
+    const radio = document.querySelector(`input[name="${nameOrId}"]:checked`);
+    return radio ? radio.value : '';
+  }
+
+  const setText = (id, v) => { const n = byId(id); if (n) n.innerText = v || ''; };
+  const setVal  = (id, v) => { const n = byId(id); if (n) n.value     = v || ''; };
+
+  // Prefer new IDs; fallback to legacy ones
+  const firstValue = (ids) => {
+    for (const id of ids) {
+      const el = byId(id);
+      if (el && String(el.value).trim() !== '') return el.value.trim();
+    }
+    return '';
+  };
+
+  // We no longer add a separate embroidery variant to the cart.  Instead,
+  // embroidery details are attached to the main product via line‑item properties.
+  // The embroideryVariantId constant is retained for backwards compatibility but
+  // is no longer used.
+  const embroideryVariantId = 45074361909444;
+
+  // Open/close/edit
+  openBtn?.addEventListener('click', () => popup && (popup.style.display = 'block'));
+  closeBtn?.addEventListener('click', () => popup && (popup.style.display = 'none'));
+  editBtn?.addEventListener('click', (e) => { e.preventDefault(); openBtn?.click(); });
+
+  // Note: The apply button’s click handling is now managed entirely within
+  // the dedicated embroidery popup script (embroidery-popup.js).  We
+  // deliberately remove the legacy addBtn click listener that read
+  // outdated field names and emitted a duplicate apply event.  The
+  // embroidery-popup script dispatches its own 'so:embroidery:apply'
+  // event with all relevant details when the customer clicks Add.
+
+  // REMOVE
+  if (removeBtn) {
+    removeBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      if (summary) summary.style.display = 'none';
+      if (openBtn) openBtn.style.display = 'flex';
+
+      ['placementInput','textInput','fontInput','colorInput','nameInput','feeInput']
+        .forEach(id => { const el = byId(id); if (el) el.value = ''; });
+
+      ['summaryPlacement','summaryText','summaryFont','summaryColor','summaryName',
+       'embroideryPrice','totalPrice']
+        .forEach(id => setText(id, ''));
+    });
+  }
+});
+</script>
+
+</body>
+</html>

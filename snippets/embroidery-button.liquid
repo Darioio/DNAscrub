@@ -1,0 +1,200 @@
+{% if product.metafields.custom.enabled == true %}
+<!-- Everything inside here will only show if embroidery is enabled -->
+<div id="embroidery-block">
+
+  <!-- Base product price in cents for JS calculation -->
+  <span id="baseProductPrice" data-product-price="{{ product.price }}"></span>
+
+  <!-- Embroidery Button -->
+  {%- comment -%}
+    The open button displays a price range derived from the name and logo
+    embroidery fees.  If a separate logo fee metafield isn’t defined, it
+    falls back to the name fee.  We compute the low and high fee values so
+    the label reads something like “+ $16.00 - $20.00 AUD”.
+  {%- endcomment -%}
+  {%- assign name_fee = product.metafields.custom.fee2 | default: 0 -%}
+  {%- assign logo_fee = product.metafields.custom.logo_fee | default: name_fee -%}
+  {%- assign low_fee = name_fee -%}
+  {%- assign high_fee = logo_fee -%}
+  {%- if logo_fee < name_fee -%}
+    {%- assign low_fee = logo_fee -%}
+    {%- assign high_fee = name_fee -%}
+  {%- endif -%}
+  <button id="openCustomization" type="button" class="embroidery-btn">
+    <span class="btn-label">Add embroidery</span>
+    <span class="price-range">&nbsp;+ 
+      {{ low_fee | times: 100 | round | money_with_currency }}
+      {%- unless low_fee == high_fee -%}
+        - {{ high_fee | times: 100 | round | money_with_currency }}
+      {%- endunless -%}
+    </span>
+    <span class="chevron">&nbsp;&#8250;</span>
+  </button>
+
+  <!-- Summary section (hidden by default) -->
+  <div id="customSummary" class="custom-summary" style="display:none;">
+    <div id="inner-customSummary">
+      <h4>
+        Embroidery Added
+        <a href="#" id="removeCustomization" title="Remove Embroidery">
+          <svg height="20px" width="20px" viewBox="0 0 20 20" class="BaseIcon-sc-8v47i9-0 ktEixi"><g fill-rule="evenodd" fill="#000"><path d="M12.527 4.01c0-.244.007-.458 0-.671-.015-.382-.228-.587-.6-.59a148.54 148.54 0 00-3.04.003c-.35.004-.554.206-.572.562-.011.226-.002.453-.002.696h4.214zM5.645 5.265c-.014.112-.026.16-.025.21.102 3.16.196 6.32.314 9.48.034.91.765 1.615 1.703 1.628 1.847.026 3.695.026 5.542.002.973-.013 1.697-.742 1.732-1.713.112-3.077.207-6.154.306-9.23.004-.126-.02-.253-.03-.377H5.645zm8.08-1.224h2.132c.566 0 1.132.004 1.697-.001.41-.004.74.096.765.58.02.403-.246.61-.785.619-.347.006-.695.001-1.191.001 0 .865.02 1.691-.004 2.517-.064 2.329-.15 4.656-.22 6.985-.052 1.791-1.275 3.029-3.073 3.05-1.763.019-3.527.02-5.29-.002-1.781-.022-2.985-1.226-3.047-3.016-.102-2.976-.198-5.953-.297-8.93-.006-.179-.02-.358-.035-.604-.36 0-.688.002-1.015 0-.593-.005-.854-.186-.862-.593-.008-.419.241-.603.837-.605 1.065-.003 2.13-.001 3.195-.001h.582c0-.315-.01-.561.002-.807.043-.897.715-1.635 1.608-1.668 1.13-.04 2.264-.04 3.393 0 .892.033 1.563.773 1.606 1.671.012.245.002.492.002.804z"></path><path d="M8.622 10.868c0 .93.002 1.861-.002 2.792-.002.517-.233.82-.619.783-.457-.045-.583-.353-.582-.774.008-1.878.002-3.757.005-5.635.001-.494.214-.755.593-.758.381-.003.6.26.603.75.005.947.001 1.894.002 2.842m2.398-.023c0 .948.003 1.895-.002 2.843-.002.486-.224.758-.597.76-.374 0-.598-.271-.599-.757-.003-1.895-.004-3.79 0-5.685.002-.477.241-.759.62-.726.434.037.581.319.58.723-.006.948-.002 1.895-.002 2.842m2.398.017c0 .931.002 1.862-.001 2.793-.002.52-.228.822-.614.788-.457-.04-.59-.346-.587-.769.007-1.878.006-3.756 0-5.635 0-.42.126-.728.592-.76.381-.024.605.253.608.74.006.948.002 1.896.002 2.843"></path></g></svg>
+        </a>
+        <span style="float: right;">|</span>
+        <a href="#" id="editCustomization" title="Edit Embroidery">Edit</a>
+      </h4>
+
+      <!-- Summary for name and logo customisations.  We separate the name and logo
+           details into distinct sections so that the "Add Both" option can
+           display both sets of fields.  The common type label sits above the
+           sections.  Sections are hidden or shown by JavaScript depending on
+           which customisation was applied. -->
+      <ul id="summaryCommon">
+        <li><strong>Type:</strong> <span id="summaryType"></span></li>
+      </ul>
+      <div id="nameSummary" style="display:none;">
+        <ul>
+          <li id="liTitle"><strong>Title:</strong> <span id="summaryTitle"></span></li>
+          <li id="liName"><strong>Name:</strong> <span id="summaryName"></span></li>
+          <li id="liPlacementName"><strong>Placement:</strong> <span id="summaryPlacementName"></span></li>
+          <li id="liFont"><strong>Font:</strong> <span id="summaryFont"></span></li>
+          <li id="liColorName"><strong>Color:</strong> <span id="summaryColorName"></span></li>
+        </ul>
+      </div>
+      <hr id="summarySeparator" style="display:none;">
+      <div id="logoSummary" style="display:none;">
+        <ul>
+          <li id="liFile"><strong>Logo:</strong> <span id="summaryFileName"></span></li>
+          <li id="liPlacementLogo"><strong>Placement:</strong> <span id="summaryPlacementLogo"></span></li>
+          <li id="liColorLogo"><strong>Color:</strong> <span id="summaryColorLogo"></span></li>
+        </ul>
+      </div>
+
+      <!-- Price breakdown section -->
+      <div id="priceBreakdown" class="price-breakdown">
+        {% capture embroidery_price_cents %}
+          {{ product.metafields.custom.fee2 | times: 100 | round }}
+        {% endcapture %}
+
+        {% capture total_price_cents %}
+          {{ product.price | plus: embroidery_price_cents }}
+        {% endcapture %}
+        <div class="separator"></div>
+        <h4>Price breakdown:</h4>
+        <ul class="price-breakdown-list">
+          <li><strong>Product:</strong> <span id="basePrice">{{ product.price | money_with_currency }}</span></li>
+          <li><strong>Embroidery:</strong> <span id="embroideryPrice">{{ embroidery_price_cents | money_with_currency }}</span></li>
+          <li><strong>Total:</strong> <span id="totalPrice">{{ total_price_cents | money_with_currency }}</span><span> each</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="custom-summary-bottom">Embroidered items are NON-REFUNDABLE. Orders with embroidered items will take up to 10 business days to dispatch</div>
+  </div>
+
+  <!-- Line item properties to embed embroidery info -->
+  <input type="hidden" name="properties[Embroidery]" value="Yes">
+  <input type="hidden" name="properties[Embroidery Type]" id="embTypeInput" value="">
+  <input type="hidden" name="properties[Embroidery Placement]" id="placementInput" value="">
+  <input type="hidden" name="properties[Embroidery Title]" id="titleInput" value="">
+  <input type="hidden" name="properties[Embroidery Name]" id="nameInput" value="">
+  <input type="hidden" name="properties[Embroidery Font]" id="fontInput" value="">
+  <input type="hidden" name="properties[Embroidery Color]" id="colorInput" value="">
+  <input type="hidden" name="properties[Embroidery Logo File]" id="logoFileInput" value="">
+  <!-- Stores the final uploaded logo URL (from the app proxy).  This will allow the cart and
+       order to reference the logo file without including the raw file in the cart payload. -->
+  <input type="hidden" name="properties[Embroidery Logo URL]" id="logoUrlInput" value="">
+  <!-- We intentionally omit storing the base64 logo data in line item properties to avoid exceeding Shopify's request size limits. -->
+  <!-- The customisation price (decimal) is stored here and multiplied by the cart quantity in JS -->
+  <input type="hidden" name="properties[Embroidery Price]" id="feeInput" value="{{ product.metafields.custom.fee2 }}">
+
+  {%- comment -%}
+    Additional hidden inputs for handling separate placement and colour values for name
+    and logo personalisations.  These are used when the "Add Both" option is
+    selected to capture both sets of data.  When a single type is selected,
+    only the relevant fields will be populated.  Empty fields will be
+    removed from the product form upon submission.
+  {%- endcomment -%}
+  <input type="hidden" name="properties[Embroidery Placement Name]" id="placementNameInput" value="">
+  <input type="hidden" name="properties[Embroidery Placement Logo]" id="placementLogoInput" value="">
+  <input type="hidden" name="properties[Embroidery Color Name]" id="colorNameInput" value="">
+  <input type="hidden" name="properties[Embroidery Color Logo]" id="colorLogoInput" value="">
+
+  {%- comment -%}
+    Hidden container for Uploadery.  Uploadery injects its upload field into this
+    container when the page loads.  We keep it hidden in the product form and
+    later move it into the popup via JavaScript so customers can upload
+    their logo from within the modal.  Without including this container in
+    the form, the Uploadery field would not be tied to the product and
+    would fail to render or submit correctly.
+  {%- endcomment -%}
+  <div id="uploadery-hidden-container" style="display:none;"></div>
+
+</div>
+
+<script>
+  (function () {
+    // Minimal hooks so your existing "Add" code only needs to set the new values
+    const byId   = (id) => document.getElementById(id);
+    const setTxt = (id, v) => { const el = byId(id); if (el) el.textContent = v || ''; };
+    const setVal = (id, v) => { const el = byId(id); if (el) el.value = v || ''; };
+    // Listen for the embroidery apply event and update the summary and
+    // hidden inputs accordingly.  This fallback ensures the summary
+    // displays the correct values even if the popup script doesn’t
+    // directly set them (for example, if the page is reloaded or
+    // initialised without the popup).
+document.addEventListener('so:embroidery:apply', function(e){
+      const d = e.detail || {};
+      // Determine type label
+      let typeLabel = '';
+      if (d.type === 'logo') typeLabel = 'Logo';
+      else if (d.type === 'both') typeLabel = 'Both';
+      else typeLabel = 'Name';
+      setTxt('summaryType', typeLabel);
+      // Show or hide the name and logo summary sections and the separator
+      const nameSummary = byId('nameSummary');
+      const logoSummary = byId('logoSummary');
+      const separator   = byId('summarySeparator');
+      if (d.type === 'both') {
+        if (nameSummary) nameSummary.style.display = '';
+        if (logoSummary) logoSummary.style.display = '';
+        if (separator)   separator.style.display   = '';
+      } else if (d.type === 'name') {
+        if (nameSummary) nameSummary.style.display = '';
+        if (logoSummary) logoSummary.style.display = 'none';
+        if (separator)   separator.style.display   = 'none';
+      } else if (d.type === 'logo') {
+        if (nameSummary) nameSummary.style.display = 'none';
+        if (logoSummary) logoSummary.style.display = '';
+        if (separator)   separator.style.display   = 'none';
+      }
+      // Update name fields
+      setTxt('summaryTitle', d.title);
+      setTxt('summaryName',  d.name);
+      setTxt('summaryPlacementName', d.placementName || '');
+      setTxt('summaryFont', d.font);
+      setTxt('summaryColorName', d.colourName || '');
+      // Update logo fields
+      setTxt('summaryFileName', d.fileName);
+      setTxt('summaryPlacementLogo', d.placementLogo || '');
+      setTxt('summaryColorLogo', d.colourLogo || '');
+      // Hidden inputs: update values for type and both sets of data.  Placeholders
+      // like placementInput and colorInput remain for backwards compatibility but
+      // are set to empty for the combined type.
+      setVal('embTypeInput', typeLabel);
+      setVal('placementInput', d.placement || '');
+      setVal('placementNameInput', d.placementName || '');
+      setVal('placementLogoInput', d.placementLogo || '');
+      setVal('titleInput', d.title);
+      setVal('nameInput', d.name);
+      setVal('fontInput', d.font);
+      setVal('colorInput', d.colour || '');
+      setVal('colorNameInput', d.colourName || '');
+      setVal('colorLogoInput', d.colourLogo || '');
+      setVal('logoFileInput', d.fileName);
+      setVal('logoUrlInput', d.fileUrl);
+      setVal('feeInput', d.price);
+    });
+
+  })();
+</script>
+{% endif %}

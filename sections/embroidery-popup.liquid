@@ -1,0 +1,327 @@
+{% if product.metafields.custom.enabled == true %}
+  {%- assign fee2_cents = product.metafields.custom.fee2 | times: 100 | round -%}
+  {%- comment %}
+    Additional fee for logo embroidery.  This must be defined via a product metafield
+    (e.g. metafields.custom.logo_fee).  If not present, fallback to the name fee.
+  {%- endcomment -%}
+  {%- assign logo_fee_value = product.metafields.custom.logo_fee | default: product.metafields.custom.fee2 -%}
+  {%- assign logo_fee_cents = logo_fee_value | times: 100 | round -%}
+
+  {%- comment -%}
+    Combined fee for adding both name and logo.  This sums the name fee and the logo fee so the
+    "Add Both" option can display an accurate price.  If no separate logo fee is defined,
+    logo_fee_value will fallback to the name fee and thus both_fee_value will be double the name fee.
+  {%- endcomment -%}
+  {%- assign both_fee_value = product.metafields.custom.fee2 | plus: logo_fee_value -%}
+  {%- assign both_fee_cents = both_fee_value | times: 100 | round -%}
+
+  <div id="customPopup" class="so-overlay" style="display:none;">
+    <div class="so-modal" role="dialog" aria-modal="true" aria-labelledby="embTitle">
+      <button class="so-close" id="closePopup" aria-label="Close">&times;</button>
+
+      <div class="so-head">
+        <h3 id="embTitle">Personalise Your Top</h3>
+        {%- comment -%}
+          Subhead shows the selected option and its price.  Hide initially
+          until the customer chooses a personalisation type.
+        {%- endcomment -%}
+        <div class="so-subhead" style="display:none;">Add My Name <span class="so-price">+ {{ fee2_cents | money }}</span></div>
+      </div>
+
+      <div class="so-body">
+        <!-- Left visual -->
+        <div class="so-left">
+          <img src="https://cdn.shopify.com/s/files/1/0673/9021/0244/files/shirt.jpg?v=1754762087" alt="Top preview" loading="lazy" />
+          <!-- Overlay for live embroidery preview.  This element will be updated via JS to reflect
+               the customer’s personalised text, colour, font and placement.  By default it
+               shows a placeholder so customers can see where their text will appear.  The
+               preview is absolutely positioned within its relatively positioned container.
+          -->
+          <div id="embroideryPreview" class="emb-preview">Your Name</div>
+          <!-- Logo preview: when the customer uploads a logo, this <img> displays the
+               selected file on top of the product image.  It is hidden by default
+               and shown via JavaScript. -->
+          <img id="logoPreview" class="emb-preview-logo" src="" alt="Logo preview" style="display:none;" />
+        </div>
+
+        <!-- Right form -->
+        <div class="so-right" data-name-fee="{{ product.metafields.custom.fee2 }}" data-logo-fee="{{ logo_fee_value }}" data-both-fee="{{ both_fee_value }}">
+          <!-- Step 1: choose embroidery type (name or logo) -->
+          <div class="so-field">
+            <div class="so-label">Select Your Personalisation Type</div>
+            <div class="so-pills emb-type-pills" role="radiogroup" aria-label="Personalisation Type">
+              {%- assign name_id = 'emb_type_name' -%}
+              {%- comment -%}
+                Do not preselect a type so that neither form is visible when
+                the modal first opens.  Selection happens when the user
+                actively chooses an option.
+              {%- endcomment -%}
+              <input class="so-radio-hide" type="radio" name="emb_type" id="{{ name_id }}" value="name" />
+              <label class="swatches__form--label" for="{{ name_id }}">
+                Add My Name
+                <span class="emb-option-price">+ {{ fee2_cents | money }}</span>
+              </label>
+              {%- assign logo_id = 'emb_type_logo' -%}
+              <input class="so-radio-hide" type="radio" name="emb_type" id="{{ logo_id }}" value="logo" />
+              <label class="swatches__form--label" for="{{ logo_id }}">
+                Add My Logo
+                <span class="emb-option-price">+ {{ logo_fee_cents | money }}</span>
+              </label>
+              {%- comment -%}
+                New option: add both name and logo.  Shows a price equal to the sum of
+                the name and logo fees.  The fields for both customisations will be
+                displayed together when selected.
+              {%- endcomment -%}
+              {%- assign both_id = 'emb_type_both' -%}
+              <input class="so-radio-hide" type="radio" name="emb_type" id="{{ both_id }}" value="both" />
+              <label class="swatches__form--label" for="{{ both_id }}">
+                Add Both
+                <span class="emb-option-price">+ {{ both_fee_cents | money }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Name personalisation form (initially hidden) -->
+          <div id="nameCustomForm" class="so-type-form" style="display:none;">
+            {% assign placements = product.metafields.custom.placements %}
+            {% if placements and placements.value.size > 0 %}
+              <div class="so-field">
+                <div class="so-label">Name Placement</div>
+                <div class="so-pills" role="radiogroup" aria-label="Name Placement">
+                  {% for item in placements.value %}
+                    {%- assign pid = 'placement_name_' | append: forloop.index -%}
+                    <input class="swatches__form--input so-radio-hide" type="radio" name="placement_name" id="{{ pid }}" value="{{ item | escape }}" {% if forloop.first %}checked{% endif %} />
+                    <label class="swatches__form--label" for="{{ pid }}">{{ item }}</label>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="so-field">
+              <div class="so-label">Name</div>
+              <input class="so-input" id="nameLine2" maxlength="20" placeholder="Name" />
+            </div>
+
+            <div class="so-field">
+              <div class="so-label">Title</div>
+              <input class="so-input" id="titleLine" maxlength="20" placeholder="Title" />
+            </div>
+
+            {% assign colors = product.metafields.custom.text_colors %}
+            {% if colors and colors.value.size > 0 %}
+              <div class="so-field">
+                <div class="so-label">Name Color</div>
+                <div class="so-swatches" role="radiogroup" aria-label="Name Color">
+                  {% for c in colors.value %}
+                    {%- assign cid = 'color_name_' | append: forloop.index -%}
+                    <!-- Use a unique name for color radios to avoid clashing with product variant color -->
+                    <input class="so-radio-hide" type="radio" name="color_name" id="{{ cid }}" value="{{ c | escape }}" {% if forloop.first %}checked{% endif %} />
+                    <label class="so-swatch" for="{{ cid }}" style="--swatch: {{ c }};" aria-label="{{ c }}"></label>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            {% assign fonts = product.metafields.custom.fonts %}
+            {% if fonts and fonts.value.size > 0 %}
+              <div class="so-field">
+                <div class="so-label">Font</div>
+                <div class="so-pills" role="radiogroup" aria-label="Font">
+                  {% for f in fonts.value %}
+                    {%- assign fid = 'font_name_' | append: forloop.index -%}
+                    <input class="swatches__form--input so-radio-hide" type="radio" name="font_name" id="{{ fid }}" value="{{ f | escape }}" {% if forloop.first %}checked{% endif %} />
+                    <label class="swatches__form--label" for="{{ fid }}">{{ f }}</label>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Logo personalisation form -->
+          <!-- Separator for combined name & logo forms.  Hidden by default and shown
+               only when the customer selects the "Add Both" option. -->
+          <hr id="bothFormSeparator" class="so-both-separator" style="display:none; margin:20px 0;" />
+
+          <div id="logoCustomForm" class="so-type-form" style="display:none;">
+            {% assign placements = product.metafields.custom.placements %}
+            {% if placements and placements.value.size > 0 %}
+              <div class="so-field">
+                <div class="so-label">Logo Placement</div>
+                <div class="so-pills" role="radiogroup" aria-label="Logo Placement">
+                  {% for item in placements.value %}
+                    {%- assign pid = 'placement_logo_' | append: forloop.index -%}
+                    <input class="swatches__form--input so-radio-hide" type="radio" name="placement_logo" id="{{ pid }}" value="{{ item | escape }}" {% if forloop.first %}checked{% endif %} />
+                    <label class="swatches__form--label" for="{{ pid }}">{{ item }}</label>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="so-field">
+              <div class="so-label">Upload your Logo</div>
+              <!-- Replace the native file input with Uploadery's container.  The Uploadery app will
+                   render its own upload button and hidden inputs inside this container.  It will
+                   handle file uploads and store the resulting URL as a line‑item property on its own. -->
+              <div style="width:100%;" id="uploadery-container"></div>
+            </div>
+
+            {% assign colors = product.metafields.custom.text_colors %}
+            {% if colors and colors.value.size > 0 %}
+              <div class="so-field">
+                <div class="so-label">Logo Color</div>
+                <div class="so-swatches" role="radiogroup" aria-label="Logo Color">
+                  {% for c in colors.value %}
+                    {%- assign cid = 'color_logo_' | append: forloop.index -%}
+                    <input class="so-radio-hide" type="radio" name="color_logo" id="{{ cid }}" value="{{ c | escape }}" {% if forloop.first %}checked{% endif %} />
+                    <label class="so-swatch" for="{{ cid }}" style="--swatch: {{ c }};" aria-label="{{ c }}"></label>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Terms (hidden until a type is selected) -->
+          <div class="so-terms" style="display:none;">
+            {%- assign terms_url = shop.policy_terms_of_service.url | default: '/policies/terms-of-service' -%}
+            <input id="so-terms" type="checkbox" />
+            <label for="so-terms">
+              By ticking this box I read and agree to the
+              <a href="https://dnascrubs.com.au/pages/embroidery-terms-conditions" target="_blank" rel="noopener">Terms and Conditions</a>
+            </label>
+          </div>
+
+          <div class="so-actions" style="display:none;">
+            <button type="button" id="resetCustomization" class="button button--secondary embroidery-btn">Reset</button>
+            <button type="button" id="applyCustomization" class="button embroidery-btn addToProduct" disabled>Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Minimal layout only; theme styles pills/buttons */
+    .so-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;height: 100%;overflow: scroll}
+    /* Center the modal horizontally by adding margin:auto.  This
+       property ensures the dialog sits centered within the overlay. */
+    .so-modal{background:#fff;border-radius:12px;max-width:940px;width:100%;position:relative;margin:auto}
+    .so-close{position:absolute;top:10px;right:12px;border:0;background:transparent;font-size:28px;line-height:1;cursor:pointer}
+    .so-close:hover{color:#ffffff;}
+    
+    .so-head{padding:20px 20px 0}
+    .so-subhead{margin-top:6px}
+    .so-price{font-weight:600}
+    .so-body{display:flex;gap:24px;padding:16px 20px 20px}
+    .so-left{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+    .so-left img{height:auto;border-radius:8px;display:block}
+
+    /* Embroidery preview overlay.  This sits on top of the product image to show
+       personalised text in real time.  Use absolute positioning and
+       pointer-events:none so it doesn’t block any interactions.  Default
+       positioning centres the text; placement classes adjust it for left/right
+       alignment.  Font size and line height are tuned for readability on
+       mobile and desktop.  */
+.emb-preview{
+    position: absolute;
+    top: 41%;
+    left: 41%;
+    transform: translate(-50%, -50%);
+    white-space: pre-wrap;
+    text-align: right;
+    font-size: 0.5rem;
+    line-height: 1;
+    font-weight: bold;
+    color: #000;
+    pointer-events: none;
+    }
+
+    /* Logo preview overlay.  Mirrors the positioning of the text preview but displays
+       the uploaded logo file.  Hidden by default and shown when a file is selected. */
+    .emb-preview-logo{
+      position: absolute;
+      top: 41%;
+      left: 41%;
+      transform: translate(-50%, -50%);
+      max-width: 5%;
+      height: auto;
+      pointer-events: none;
+      display: none;
+    }
+    /* Placement modifiers adjust the horizontal position and alignment of the
+       preview.  The top position remains fixed to roughly chest height.  */
+    /* Placement modifiers adjust the position for both text and logo previews */
+    .emb-preview.emb-placement-left-chest,
+    .emb-preview-logo.emb-placement-left-chest{
+      left:59%;
+      text-align:right;
+    }
+    .emb-preview.emb-placement-center,
+    .emb-preview-logo.emb-placement-center{
+      left:50%;
+      text-align:center;
+    }
+    .emb-preview.emb-placement-right-chest,
+    .emb-preview-logo.emb-placement-right-chest{
+      left:41%;
+      text-align:left;
+    }
+
+    .so-right{flex:1.1;min-width:260px}
+    .so-field{margin-top:14px}
+    .so-label{font-weight:600;margin-bottom:6px}
+    .so-terms{margin-top:16px;display:flex;gap:8px;align-items:flex-start;font-size: 12px;}
+    .so-terms a:hover{text-decoration:underline;}
+    .so-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:18px}
+    .so-input{width:100%;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;font-size:14px;outline:none}
+    .so-input:focus{background:#f2f8ff;}
+
+    .so-error{color:#c62828;margin-top:6px;font-size: 12px;}
+.so-terms.is-error{border-radius:8px;background:#fff7f7;box-shadow:0 0 0 1px #f8d7da inset;padding:8px}
+@keyframes so-shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+.so-terms.is-shake{animation:so-shake .35s ease}
+
+    /* Color swatches */
+    .so-swatches{display:flex;gap:12px;flex-wrap:wrap}
+    .so-swatch{--swatch:#000;width:28px;height:28px;border-radius:999px;border:1px solid #e5e7eb;background:var(--swatch);display:inline-block;cursor:pointer}
+    .so-radio-hide:checked + .so-swatch{outline:2px solid #111;outline-offset:2px}
+
+    /* Pills: hide radios + requested sizing on label */
+    .so-pills{display:flex;flex-wrap:wrap;gap:10px}
+    .so-radio-hide{position:absolute;opacity:0;pointer-events:none}
+    .swatches__form--label{
+      height:42px !important;
+      line-height:40px !important;
+      padding:0 10px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      box-sizing:border-box;
+    }
+
+     .addToProduct {
+    background-color: #0f4068 !important;
+    color: #fff !important;
+    transition: 0.3s;
+    }
+    .addToProduct:hover {
+        background-color: #061929 !important;
+    }
+
+    @media (max-width: 720px){
+      .so-body{flex-direction:column}
+      .so-left{order:1}
+      .so-right{order:2}
+    }
+
+    .so-actions{ position: relative; } /* anchor for absolute child */
+  .so-btn-cover{
+    position:absolute;
+    /* left/top/width/height set by JS to exactly match the Add button */
+    background: transparent;
+    display:none; /* only visible when terms are unchecked */
+    z-index: 2;   /* above the button */
+  }
+  </style>
+
+
+{% endif %}
