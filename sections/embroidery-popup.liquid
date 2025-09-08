@@ -31,17 +31,20 @@
       <div class="so-body">
         <!-- Left visual -->
         <div class="so-left">
-          <img src="https://cdn.shopify.com/s/files/1/0673/9021/0244/files/shirt.jpg?v=1754762087" alt="Top preview" loading="lazy" />
-          <!-- Overlay for live embroidery preview.  This element will be updated via JS to reflect
-               the customer’s personalised text, colour, font and placement.  By default it
-               shows a placeholder so customers can see where their text will appear.  The
-               preview is absolutely positioned within its relatively positioned container.
-          -->
-          <div id="embroideryPreview" class="emb-preview">Your Name</div>
-          <!-- Logo preview: when the customer uploads a logo, this <img> displays the
-               selected file on top of the product image.  It is hidden by default
-               and shown via JavaScript. -->
-          <img id="logoPreview" class="emb-preview-logo" src="" alt="Logo preview" style="display:none;" />
+          <!-- Wrapper ensures overlays stay positioned relative to the image even when resized -->
+          <div class="emb-container">
+            <img class="base-image" src="https://cdn.shopify.com/s/files/1/0673/9021/0244/files/shirt.jpg?v=1754762087" alt="Top preview" loading="lazy" />
+            <!-- Overlay for live embroidery preview.  This element will be updated via JS to reflect
+                 the customer’s personalised text, colour, font and placement.  By default it
+                 shows a placeholder so customers can see where their text will appear.  The
+                 preview is absolutely positioned within its relatively positioned container.
+            -->
+            <div id="embroideryPreview" class="emb-preview">Your Name</div>
+            <!-- Logo preview: when the customer uploads a logo, this <img> displays the
+                 selected file on top of the product image.  It is hidden by default
+                 and shown via JavaScript. -->
+            <img id="logoPreview" class="emb-preview-logo" src="" alt="Logo preview" style="display:none;" />
+          </div>
         </div>
 
         <!-- Right form -->
@@ -199,8 +202,9 @@
     .so-subhead{margin-top:6px}
     .so-price{font-weight:600}
     .so-body{display:flex;gap:24px;padding:16px 20px 20px}
-    .so-left{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
-    .so-left img{height:auto;border-radius:8px;display:block}
+    .so-left{flex:1;display:flex;align-items:center;justify-content:center}
+    .emb-container{position:relative;width:100%}
+    .emb-container img.base-image{width:100%;height:auto;border-radius:8px;display:block}
 
     /* Embroidery preview overlay.  This sits on top of the product image to show
        personalised text in real time.  Use absolute positioning and
