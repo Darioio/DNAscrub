@@ -73,7 +73,7 @@
     // Clear file input
     if (fileInput) fileInput.value = '';
     // Reset radio groups for logo to first option
-    ['placement_logo', 'color_logo'].forEach(group => {
+    ['placement_logo'].forEach(group => {
       const radios = root.querySelectorAll('input[name="' + group + '"]');
       radios.forEach((r, i) => { r.checked = (i === 0); });
     });
@@ -231,7 +231,7 @@
   }
 
   // Helpers to get the selected value from a radio group.  Pass in the
-  // group name (e.g. "placement_name" or "color_logo").  Return empty
+  // group name (e.g. "placement_name" or "placement_logo").  Return empty
   // string if none checked.  This allows us to reuse the same function for
   // both name and logo forms.
   function getSelected(name) {
@@ -725,9 +725,9 @@
       radio.addEventListener('change', updatePreview);
     });
   });
-  // Colour and placement changes for the logo form affect only the validity of
+  // Placement changes for the logo form affect only the validity of
   // the customisation (they must exist before Add is enabled).
-  ['color_logo', 'placement_logo'].forEach(function(group) {
+  ['placement_logo'].forEach(function(group) {
     Array.from(root.querySelectorAll('input[name="' + group + '"]')).forEach(function(radio) {
       radio.addEventListener('change', () => {
         updateAddState();
@@ -959,7 +959,7 @@
       fileInput.value = '';
     }
     // Reset radio groups to their first option
-    ['placement_name', 'placement_logo', 'color_name', 'color_logo', 'font_name'].forEach(name => {
+    ['placement_name', 'placement_logo', 'color_name', 'font_name'].forEach(name => {
       const radios = root.querySelectorAll('input[name="' + name + '"]');
       if (radios.length) {
         radios.forEach((r, i) => { r.checked = (i === 0); });
@@ -1007,7 +1007,6 @@
     let nameVal       = '';
     // Logo section variables
     let placementLogo = '';
-    let colourLogo    = '';
     let fileName      = '';
     let logoUrl       = '';
     let price         = 0;
@@ -1021,7 +1020,6 @@
       price         = nameFee;
     } else if (type === 'logo') {
       placementLogo = getSelected('placement_logo');
-      colourLogo    = getSelected('color_logo');
       price         = logoFee;
       const details = getUploaderyFileDetails();
       fileName      = details.fileName;
@@ -1034,7 +1032,6 @@
       titleVal      = (titleInput?.value || '').trim();
       nameVal       = (nameInput?.value  || '').trim();
       placementLogo = getSelected('placement_logo');
-      colourLogo    = getSelected('color_logo');
       // Price is the combined fee
       price         = bothFee;
       const details = getUploaderyFileDetails();
@@ -1075,12 +1072,11 @@
         if (liFile) liFile.style.display = fileName ? '' : 'none';
         S('summaryFileName', fileName);
         S('summaryPlacementLogo', placementLogo);
-        S('summaryColorLogo', colourLogo);
       }
       // Common placement and colour (legacy fields) use combined or name placement if available
       // For backward compatibility we set summaryPlacement and summaryColor for themes that only show single values
       const commonPlacement = placementName || placementLogo;
-      const commonColour    = colourName || colourLogo;
+      const commonColour    = colourName;
       S('summaryPlacement', commonPlacement);
       S('summaryColor',     commonColour);
       // Font list item display: only for name or both when font present
@@ -1114,7 +1110,6 @@
       H('placementNameInput', placementName);
       H('placementLogoInput', placementLogo);
       H('colorNameInput', colourName);
-      H('colorLogoInput', colourLogo);
       // Title and name values
       H('titleInput', titleVal);
       H('nameInput',  nameVal);
@@ -1151,7 +1146,6 @@
           placementName: placementName,
           placementLogo: placementLogo,
           colourName: colourName,
-          colourLogo: colourLogo,
           fontName: fontName
         }
       }));
@@ -1170,7 +1164,6 @@
           { name: 'Embroidery Placement Name', id: 'placementNameInput' },
           { name: 'Embroidery Placement Logo', id: 'placementLogoInput' },
           { name: 'Embroidery Color Name', id: 'colorNameInput' },
-          { name: 'Embroidery Color Logo', id: 'colorLogoInput' },
           { name: 'Embroidery Price', id: 'feeInput' },
           { name: 'Embroidery Instance', value: String(Date.now()) }
         ];
