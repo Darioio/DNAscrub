@@ -165,19 +165,6 @@
               <div style="width:100%;" id="uploadery-container"></div>
             </div>
 
-            {% assign colors = product.metafields.custom.text_colors %}
-            {% if colors and colors.value.size > 0 %}
-              <div class="so-field">
-                <div class="so-label">Logo Color</div>
-                <div class="so-swatches" role="radiogroup" aria-label="Logo Color">
-                  {% for c in colors.value %}
-                    {%- assign cid = 'color_logo_' | append: forloop.index -%}
-                    <input class="so-radio-hide" type="radio" name="color_logo" id="{{ cid }}" value="{{ c | escape }}" {% if forloop.first %}checked{% endif %} />
-                    <label class="so-swatch" for="{{ cid }}" style="--swatch: {{ c }};" aria-label="{{ c }}"></label>
-                  {% endfor %}
-                </div>
-              </div>
-            {% endif %}
           </div>
 
           <!-- Terms (hidden until a type is selected) -->

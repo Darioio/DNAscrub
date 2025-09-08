@@ -65,7 +65,6 @@
         <ul>
           <li id="liFile"><strong>Logo:</strong> <span id="summaryFileName"></span></li>
           <li id="liPlacementLogo"><strong>Placement:</strong> <span id="summaryPlacementLogo"></span></li>
-          <li id="liColorLogo"><strong>Color:</strong> <span id="summaryColorLogo"></span></li>
         </ul>
       </div>
 
@@ -117,7 +116,6 @@
   <input type="hidden" name="properties[Embroidery Placement Name]" id="placementNameInput" value="">
   <input type="hidden" name="properties[Embroidery Placement Logo]" id="placementLogoInput" value="">
   <input type="hidden" name="properties[Embroidery Color Name]" id="colorNameInput" value="">
-  <input type="hidden" name="properties[Embroidery Color Logo]" id="colorLogoInput" value="">
 
   {%- comment -%}
     Hidden container for Uploadery.  Uploadery injects its upload field into this
@@ -176,7 +174,6 @@ document.addEventListener('so:embroidery:apply', function(e){
       // Update logo fields
       setTxt('summaryFileName', d.fileName);
       setTxt('summaryPlacementLogo', d.placementLogo || '');
-      setTxt('summaryColorLogo', d.colourLogo || '');
       // Hidden inputs: update values for type and both sets of data.  Placeholders
       // like placementInput and colorInput remain for backwards compatibility but
       // are set to empty for the combined type.
@@ -189,7 +186,6 @@ document.addEventListener('so:embroidery:apply', function(e){
       setVal('fontInput', d.font);
       setVal('colorInput', d.colour || '');
       setVal('colorNameInput', d.colourName || '');
-      setVal('colorLogoInput', d.colourLogo || '');
       setVal('logoFileInput', d.fileName);
       setVal('logoUrlInput', d.fileUrl);
       setVal('feeInput', d.price);
